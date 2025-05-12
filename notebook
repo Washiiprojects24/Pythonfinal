@@ -1,0 +1,47 @@
+# COVID-19 Global Data Tracker
+
+# 📦 Import Libraries
+import pandas as pd
+import plotly.express as px
+import requests
+
+# 🌐 Load COVID-19 Data
+print("Loading data from Our World in Data...")
+url = "https://covid.ourworldindata.org/data/owid-covid-data.csv"
+df = pd.read_csv(url)
+
+# 🧼 Data Cleaning
+df = df[df['continent'].notna()]  # Remove aggregates like "World"
+df['date'] = pd.to_datetime(df['date'])
+
+# 📊 Latest Data Snapshot
+latest_date = df['date'].max()
+latest_df = df[df['date'] == latest_date]
+
+# 🌍 Top 10 Countries by Total Cases
+top_cases = latest_df.nlargest(10, 'total_cases')[['location', 'total_cases']]
+fig1 = px.bar(top_cases, x='location', y='total_cases',
+              title=f'Top 10 Countries by Total COVID-19 Cases as of {latest_date.date()}',
+              labels={'location': 'Country', 'total_cases': 'Total Cases'},
+              text='total_cases')
+fig1.show()
+
+# 🕒 Time Series Plot - Global Daily Cases
+global_df = df.groupby('date')['new_cases'].sum().reset_index()
+fig2 = px.line(global_df, x='date', y='new_cases',
+               title='Global Daily New COVID-19 Cases Over Time',
+               labels={'new_cases': 'New Cases', 'date': 'Date'})
+fig2.show()
+
+# 📌 Country Comparison Tool
+countries = ['United States', 'India', 'Brazil', 'Russia', 'United Kingdom']
+country_df = df[df['location'].isin(countries)]
+
+fig3 = px.line(country_df, x='date', y='new_cases', color='location',
+               title='Daily New COVID-19 Cases - Selected Countries',
+               labels={'new_cases': 'New Cases', 'date': 'Date'})
+fig3.show()
+
+# ✅ Summary
+print(f"Data last updated: {latest_date.date()}")
+print("Tracker complete. Visualizations rendered successfully.")
